@@ -91,11 +91,11 @@ While maintaining our core vision, we've made the following refinements to the p
 
 ### Week 2: Core Features Implementation
 - **Tasks**: Dashboard, item reporting, search functionality
-- **Team Members**: Fernanda, Allison Ewing
+- **Team Members**: Fernanda De La Fuente, Allison Ewing
 
 ### Week 3: Backend & UI Development
 - **Tasks**: Database implementation, storage services, UI components, user profile
-- **Team Members**: Jasmin Guadarrama, Abdallah Afifi
+- **Team Members**: All team members
 
 ### Week 4: Final Integration & Testing
 - **Tasks**: Final bug fixes, documentation, quality assurance
