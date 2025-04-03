@@ -27,7 +27,7 @@ While maintaining our core vision, we've made the following refinements to the p
 
 2. **Reward Points System**: Added gamification through a reward points system to encourage user engagement. Users earn points for reporting found items and when items they found are claimed.
 
-3. **Status Tracking**: Added more detailed status tracking for items (Pending, Resolved, Claimed) to better manage the lifecycle of lost/found items.
+3. **Status Tracking**: Added more detailed status tracking for items (Pending, Resolved, Claimed) to manage better the lifecycle of lost/found items.
 
 4. **UI/UX Improvements**: Refined the user interface with a more intuitive navigation system and color-coding (red for lost items, green for found items) for better visual distinction.
 
@@ -103,37 +103,11 @@ While maintaining our core vision, we've made the following refinements to the p
 
 ## Completed Tasks
 
-### Authentication System
-- **Method**: Implemented Firebase Authentication with email/password and Google Sign-in options
-- **Screenshots**:
-  ![Authentication Screen (Placeholder)]()
+### Project Setup
+- **Method**: We initialized the firebase console and researched the available frameworks.
+- **Team Members**: All team members. 
 
-### Item Reporting System
-- **Method**: Created a two-step process for reporting items:
-  1. User selects whether they lost or found an item
-  2. User fills out details including title, description, category, location, date, and optional photo
-- **Screenshots**:
-  ![Report Item Screen (Placeholder)]()
 
-### Dashboard Implementation
-- **Method**: Implemented a tabbed dashboard showing recent, lost, and found items with real-time updates from Firebase
-- **Screenshots**:
-  ![Dashboard Screen (Placeholder)]()
-
-### Search Functionality
-- **Method**: Created a comprehensive search system with text-based search and various filters (item type, category, date range)
-- **Screenshots**:
-  ![Search Screen (Placeholder)]()
-
-### User Profile & Item Management
-- **Method**: Implemented a user profile screen that displays user information and all reported items with their current status
-- **Screenshots**:
-  ![Profile Screen (Placeholder)]()
-
-### Notification System
-- **Method**: Used Firebase Cloud Messaging for push notifications and implemented a local notification service for in-app alerts about potential matches and status updates
-- **Screenshots**:
-  ![Notifications (Placeholder)]()
 
 ## Work Distribution Summary
 
