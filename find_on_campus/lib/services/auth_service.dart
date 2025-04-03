@@ -1,11 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/user.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // Configure GoogleSignIn with scopes and client ID for web
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    // Web client ID is only needed for web platforms
+    clientId: kIsWeb ? 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com' : null,
+  );
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Stream of authentication state changes
@@ -17,29 +23,48 @@ class AuthService {
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // For web, we can use Firebase's signInWithPopup for a better experience
+      if (kIsWeb) {
+        // Web sign-in flow
+        GoogleAuthProvider authProvider = GoogleAuthProvider();
+        authProvider.addScope('email');
+        authProvider.addScope('profile');
+        
+        try {
+          // Try popup first (better user experience)
+          final userCredential = await _auth.signInWithPopup(authProvider);
+          
+          // If this is a new user, create a user document in Firestore
+          if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+            await _createUserDocument(userCredential.user!);
+          }
+          
+          return userCredential;
+        } catch (e) {
+          // Fall back to redirect if popup fails
+          await _auth.signInWithRedirect(authProvider);
+          return null; // This will return after redirect completes
+        }
+      } else {
+        // Mobile sign-in flow
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) return null;
 
-      if (googleUser == null) return null;
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final userCredential = await _auth.signInWithCredential(credential);
+        
+        // If this is a new user, create a user document in Firestore
+        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+          await _createUserDocument(userCredential.user!);
+        }
 
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the credential
-      final userCredential = await _auth.signInWithCredential(credential);
-      
-      // If this is a new user, create a user document in Firestore
-      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        await _createUserDocument(userCredential.user!);
+        return userCredential;
       }
-
-      return userCredential;
     } catch (e) {
       print('Error signing in with Google: $e');
       return null;

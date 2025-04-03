@@ -1,6 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+// This needs to be outside and marked as a VM entry point
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Make sure Firebase is initialized for background handlers
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+}
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -46,11 +55,12 @@ class NotificationService {
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
           // Handle notification tap
+          print("Notification tapped: ${response.payload}");
         },
       );
       
-      // Handle background messages
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      // Handle background messages - use the top-level handler
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       
       // Handle foreground messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -188,10 +198,4 @@ class NotificationService {
       body: body,
     );
   }
-}
-
-// Handle background messages
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
 }

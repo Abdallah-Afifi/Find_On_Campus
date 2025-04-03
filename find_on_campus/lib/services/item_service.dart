@@ -60,7 +60,7 @@ class ItemService {
       return uuid;
     } catch (e) {
       print('Error adding item: $e');
-      throw e;
+      rethrow;
     }
   }
   
@@ -73,7 +73,7 @@ class ItemService {
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
       print('Error uploading photo: $e');
-      throw e;
+      rethrow;
     }
   }
   
@@ -152,7 +152,7 @@ class ItemService {
       });
     } catch (e) {
       print('Error updating item status: $e');
-      throw e;
+      rethrow;
     }
   }
   
@@ -249,7 +249,7 @@ class ItemService {
       }
     } catch (e) {
       print('Error deleting item: $e');
-      throw e;
+      rethrow;
     }
   }
 }

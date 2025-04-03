@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/item.dart';
 import '../models/user.dart';
-import '../services/auth_service.dart';
-import '../services/item_service.dart';
+import '../providers/auth_provider.dart';
+import '../providers/item_provider.dart';
 
 class ItemDetailsScreen extends StatefulWidget {
   final String itemId;
@@ -15,8 +16,6 @@ class ItemDetailsScreen extends StatefulWidget {
 }
 
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
-  final ItemService _itemService = ItemService();
-  final AuthService _authService = AuthService();
   bool _isLoading = true;
   Item? _item;
   List<Item> _matchingItems = [];
@@ -35,19 +34,22 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     });
 
     try {
+      final itemProvider = Provider.of<ItemProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
       // Get item details
-      final item = await _itemService.getItemById(widget.itemId);
+      final item = await itemProvider.getItemById(widget.itemId, useCache: false);
       
       if (item != null) {
         // Check if current user is the owner
-        final currentUser = _authService.currentUser;
-        final isOwner = currentUser != null && currentUser.uid == item.userId;
+        final currentUser = authProvider.currentUser;
+        final isOwner = currentUser != null && currentUser.id == item.userId;
         
         // Get matching items if any
         List<Item> matchingItems = [];
         if (item.matchingItemIds != null && item.matchingItemIds!.isNotEmpty) {
           for (final id in item.matchingItemIds!) {
-            final matchingItem = await _itemService.getItemById(id);
+            final matchingItem = await itemProvider.getItemById(id);
             if (matchingItem != null) {
               matchingItems.add(matchingItem);
             }
@@ -57,7 +59,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         // Get item owner details
         AppUser? owner;
         try {
-          owner = await _authService.getUserById(item.userId);
+          owner = await authProvider.getUserById(item.userId);
         } catch (e) {
           print('Error getting item owner: $e');
         }
@@ -72,19 +74,23 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         });
       } else {
         // Item not found
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Item not found')),
-        );
-        Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Item not found')),
+          );
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       print('Error loading item details: $e');
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading item details: $e')),
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading item details: $e')),
+        );
+      }
     }
   }
 
@@ -94,22 +100,27 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     });
 
     try {
-      await _itemService.updateItemStatus(widget.itemId, newStatus);
+      final itemProvider = Provider.of<ItemProvider>(context, listen: false);
+      await itemProvider.updateItemStatus(widget.itemId, newStatus);
       
       // Reload item details
       await _loadItemDetails();
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Item status updated to ${newStatus.toString().split('.').last}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Item status updated to ${newStatus.toString().split('.').last}')),
+        );
+      }
     } catch (e) {
       print('Error updating item status: $e');
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating item status: $e')),
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating item status: $e')),
+        );
+      }
     }
   }
 
@@ -156,19 +167,22 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           children: [
             // Item image
             if (_item!.photoUrl != null)
-              Image.network(
-                _item!.photoUrl!,
-                height: 250,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 250,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image_not_supported, size: 50),
-                  );
-                },
+              Hero(
+                tag: 'item-${_item!.id}',
+                child: Image.network(
+                  _item!.photoUrl!,
+                  height: 250,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 250,
+                      width: double.infinity,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image_not_supported, size: 50),
+                    );
+                  },
+                ),
               ),
             
             Padding(
@@ -389,6 +403,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     );
   }
 
+  // Helper widgets
   Widget _buildTypeChip(ItemType type) {
     final isLost = type == ItemType.lost;
     return Chip(
@@ -472,6 +487,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   }
 
   void _showDeleteConfirmation() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final itemProvider = Provider.of<ItemProvider>(context, listen: false);
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -488,10 +506,17 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             onPressed: () async {
               Navigator.pop(context);
               
+              if (authProvider.currentUser == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('You must be logged in to delete this item')),
+                );
+                return;
+              }
+              
               try {
-                await _itemService.deleteItem(
+                await itemProvider.deleteItem(
                   widget.itemId,
-                  _authService.currentUser!.uid,
+                  authProvider.currentUser!.id,
                 );
                 
                 if (!mounted) return;
@@ -502,6 +527,8 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                 
                 Navigator.pop(context);
               } catch (e) {
+                if (!mounted) return;
+                
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Error deleting item: $e')),
                 );
