@@ -59,14 +59,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               return [
                 SliverAppBar(
                   expandedHeight: 120.0,
-                  floating: false,
+                  floating: true,
                   pinned: true,
+                  centerTitle: true,
                   flexibleSpace: FlexibleSpaceBar(
                     title: const Text(
                       'FindOnCampus',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 40,
                       ),
                     ),
                     background: Container(
