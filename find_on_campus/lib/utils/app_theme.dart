@@ -17,7 +17,7 @@ class AppTheme {
   static const Color searchBarBackground = Color(0xFFEEEEEE);
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF212121);
+  static const Color textPrimary = Color(0xFF000000); // black
   static const Color textSecondary = Color(0xFF757575);
   static const Color textLight = Color(0xFFBDBDBD);
 
