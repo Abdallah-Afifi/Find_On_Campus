@@ -67,6 +67,7 @@ class FindOnCampusApp extends StatelessWidget {
         title: 'FindOnCampus',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        color: Colors.white,
         home: const HomePage(),
       ),
     );
